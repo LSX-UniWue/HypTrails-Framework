@@ -1,0 +1,16 @@
+numpy
+scipy
+pytrails
+networkx
+geopy
+matplotlib
+tqdm
+lxml
+scholarmetrics
+semanticscholar
+unidecode
+torch
+transformers
+futures==2.1.6
+deepwalk
+debugpy

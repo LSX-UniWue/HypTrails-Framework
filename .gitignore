@@ -1,0 +1,4 @@
+.vscode
+.venv
+data/bibliometric_dataset
+*__pycache__
