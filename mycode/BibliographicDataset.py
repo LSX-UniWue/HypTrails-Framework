@@ -10,18 +10,31 @@ class BibliographicDataset:
         self.path = args['path']
         self.verbose = args['verbose']
         self.separation_year = args['separation_year']
+        self.do_graph_vectors = args['do_graph_vectors']
+        self.do_semantic_vectors = args['do_semantic_vectors']
+        if 'conferences' not in args:
+            with open(Path(self.path, "ai_venues.json"), 'r') as f:
+                tmp = json.load(f)
+                self.conferences = set([a for b in tmp.values() for a in b])
+        else:
+            self.conferences = args['conferences']
         self.pubs = []
+        self.authors_to_consider = set()
         with open(Path(self.path, "ai_dataset.jsonl"), 'r') as f:
             for line in tqdm(f, desc="Reading dataset ..."):
-                self.pubs.append(json.loads(line))
+                line = json.loads(line)
+                if line['venue'] in self.conferences:
+                    self.pubs.append(line)
+                    self.authors_to_consider.update(line['author'])
+        print(f"Having {len(self.pubs)} publications and {len(self.authors_to_consider)} authors. ")
         self.authors = dict()
         with open(Path(self.path, "persons_matched.jsonl"), 'r') as f:
-            for idx, line in enumerate(tqdm(f, desc="Loading authors ...")):
+            for line in tqdm(f, desc="Loading authors ..."):
                 line = json.loads(line)
-                line['id'] = idx
                 authors = line['author'] if isinstance(line['author'], list) else [line['author']]
                 for auth in authors:
-                    self.authors[auth] = line
+                    if auth in self.authors_to_consider:
+                        self.authors[auth] = line
         self.geocodes = {}
         with open(Path(self.path, "country_to_coord.json"), 'r') as f:
             self.geocodes.update(json.load(f))
@@ -31,8 +44,10 @@ class BibliographicDataset:
                 self.geocodes[line['affiliation']] = (line['lat'], line['lon'])
         self.node_attributes = {}
         self.graph = self.create_network()
-        self.add_embedding(Path(self.path, "graph_embeddings.jsonl"), "graph")
-        # self.add_embedding(Path(self.path, "semantic_author_embeddings.jsonl"), "semantic")
+        if self.do_graph_vectors:
+            self.add_embedding(Path(self.path, "graph_embeddings.jsonl"), "graph")
+        if self.do_semantic_vectors:
+            self.add_embedding(Path(self.path, "semantic_author_embeddings.jsonl"), "semantic")
         nx.set_node_attributes(self.graph, self.node_attributes)
         if self.verbose:
             print(f"Having {len(self.graph)} nodes and {self.graph.size()} edges. ")
@@ -42,9 +57,9 @@ class BibliographicDataset:
     def create_network(self) -> nx.Graph:        
         graph = nx.Graph()
         graph.add_nodes_from([author['id'] for author in self.authors.values()])
-        self.node_attributes = {author['id']: {'schol_affiliations': author['schol_affiliations'] if 'schol_affiliations' in author else None, 
-                                                'dblp_affiliations': author['dblp_affiliations'] if 'dblp_affiliations' in author else None,
-                                                'countries': author['countries'] if 'countries' in author else None, 
+        self.node_attributes = {author['id']: {'schol_affiliations': set(author['schol_affiliations']) if 'schol_affiliations' in author and author['schol_affiliations'] is not None else None, 
+                                                'dblp_affiliations': set(author['dblp_affiliations']) if 'dblp_affiliations' in author and author['dblp_affiliations'] is not None else None,
+                                                'countries': set(author['countries']) if 'countries' in author and author['countries'] is not None else None, 
                                                 'country_geocodes': [self.geocodes[x] for x in author['countries'] if x in self.geocodes] if 'countries' in author else None,
                                                 'affi_geocodes': [self.geocodes[x] for x in author['dblp_affiliations'] if x in self.geocodes] if 'dblp_affiliations' in author else None,
                                                 'schol_hindex': author['schol_hindex'] if 'schol_hindex' in author else None, 
@@ -73,6 +88,8 @@ class BibliographicDataset:
         with open(path_to_embeddings, 'r') as f:
             for line in tqdm(f, desc="Load graph embeddings ..."):
                 line = json.loads(line)
+                if line['author'] not in self.authors:
+                    continue
                 author_id = self.authors[line['author']]['id']
                 self.node_attributes[author_id][f"{name}_vectors"] = np.array(line['embedding'])
 
@@ -83,7 +100,8 @@ class BibliographicDataset:
 
 if __name__ == "__main__":
     graph = BibliographicDataset(args={
-        "path": Path("data", "bibliometric_dataset"),
+        'path': Path("data", "bibliometric_dataset"),
+        'conferences': set(["NIPS/NeurIPS", "ICML", "KDD", "WWW"]),
         "separation_year": 2016, 
         'verbose': 1
     }).get_network()

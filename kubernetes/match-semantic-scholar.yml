@@ -1,20 +1,22 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: hydras-dataset
+  name: match-semantic-scholar
 spec:
   backoffLimit: 0
   template:
     spec:
       containers:
-        - name: hydras-dataset
+        - name: match-semantic-scholar
           image: ls6-staff-registry.informatik.uni-wuerzburg.de/koopmann/hydras:latest
           resources:
             limits:
               cpu: 1
+              nvidia.com/gpu: "1"
               memory: "50Gi"
             requests:
               cpu: 1
+              nvidia.com/gpu: "1"
               memory: "50Gi"
           imagePullPolicy: "Always"
           volumeMounts:
@@ -25,7 +27,7 @@ spec:
           env:
             - name: HOME
               value: "/workdir/"
-          command: ["/bin/bash",  "-c", "python3 -u mycode/extract_dblp_dataset/download_semantic_scholar.py"]
+          command: ["/bin/bash",  "-c", "python3 -u -m debugpy --listen 0.0.0.0:4444 mycode/extract_dblp_dataset/create_dataset.py"]
       restartPolicy: Never
       imagePullSecrets:
         - name: ls6-staff-registry
