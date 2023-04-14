@@ -16,9 +16,7 @@ from mycode.Visualization import plot_hyptrails
 
 def calculate_row_similarity(row, attributes: dict, metric: HYDRASMETRICS, top_k: int) -> csr_matrix:
     current = attributes[row]
-    if current is None:
-        return row, csr_matrix((1, len(attributes.keys())))
-    if metric == HYDRASMETRICS.GEO_DISTANCE and len(current) == 0:
+    if current is None or (isinstance(current, list) and len(current) == 0):
         return row, csr_matrix((1, len(attributes.keys())))
     if top_k:
         if metric == HYDRASMETRICS.EQUALS:
@@ -58,26 +56,47 @@ def calculate_row_similarity(row, attributes: dict, metric: HYDRASMETRICS, top_k
 class Hydras:
     def __init__(self, args: dict) -> None:
         self.confidence_factors = args['ks']
+        self.run_name = args['run_name']
         self.network = args['network']
         self.metrics = args['metrics']
-        self.save_matrices = args['save_matrices']
+        self.calculate_matrices = args['calculate_matrices']
         self.save_matrices_path = args['save_matrices_path']
-        self.save_evidences = args['save_evidences']
+        self.calculate_evidences = args['calculate_evidences']
         self.save_evidences_path = args['save_evidences_path']
-        self.transitions = nx.adjacency_matrix(self.network)
-        self.top_k = int(self.transitions.shape[0] * args['top_k_percentage'])
-        self.nodes_to_id = {node: i for i, node in enumerate(self.network.nodes())}
-        self.hypotheses = self.create_hypotheses()
-        if self.save_matrices:
+        self.build_plot = args['build_plot']
+        self.verbose = args['verbose']
+        if self.calculate_matrices:
+            self.transitions = nx.adjacency_matrix(self.network)
+            self.top_k = int(self.transitions.shape[0] * args['top_k_percentage'])
+            self.nodes_to_id = {node: i for i, node in enumerate(self.network.nodes())}
+            self.hypotheses = self.create_hypotheses()
+            if self.verbose:
+                print(f"Saving hypotheses. ")
             for name, matrix in self.hypotheses.items():
-                np.save(Path(self.save_matrices_path, f"{name}.npy"), matrix)
-        self.evidence = self.run_hyptrails(self.transitions, self.hypotheses)
-        if self.save_evidences:
-            with open(Path(self.save_evidences_path, "evidences.json"), "w") as f:
-                json.dump(self.evidence, f)
-        for k, v in self.evidence.items():
-            print(f"{k}: {v}")
-        plot_hyptrails(self.evidence, k_values=self.confidence_factors, save_path=Path("data", "images", "test.png"))
+                np.save(Path(self.save_matrices_path, f"{self.run_name}-{name}.npy"), matrix)
+            np.save(Path(self.save_matrices_path, f"{self.run_name}-transitions.npy"), self.transitions)
+        else:
+            ...
+        if self.calculate_matrices:
+            self.evidence = self.run_hyptrails(self.transitions, self.hypotheses)
+            if self.verbose:
+                print(f"Saving evidences. ")
+                with open(Path(self.save_evidences_path, f"{self.run_name}.json"), "w") as f:
+                    json.dump(self.evidence, f)
+        else:
+            self.evidence = json.load(open(Path(self.save_evidences_path, f"{self.run_name}.json"), 'r'))
+        if self.verbose:
+            for k, v in self.evidence.items():
+                print(f"{k}: {v}")
+        if self.build_plot:
+            plot_hyptrails(self.evidence, k_values=self.confidence_factors, save_path=Path("data", "images", f"{self.run_name}.png"))
+
+    @staticmethod
+    def save_normalize(matrix: csr_matrix) -> csr_matrix:
+        for row in matrix:
+            if row.sum() != 0:
+                row /= row.sum()
+        return matrix
 
     def create_hypotheses(self) -> dict:
         hypotheses = {x: csr_matrix(self.transitions.shape) for x in self.metrics.keys()}
@@ -96,8 +115,7 @@ class Hydras:
                 curr_max = hypotheses[name].max()
                 new_scores = 1 - hypotheses[name].data / curr_max
                 hypotheses[name].data = new_scores
-            else:
-                hypotheses[name] = csr_matrix(hypotheses[name] / hypotheses[name].sum(axis=1))
+            hypotheses[name] = self.save_normalize(hypotheses[name])
             print(f"\tDone in {time.time() - start} seconds. ")
         return hypotheses
 
@@ -130,18 +148,19 @@ if __name__ == '__main__':
         })
     else:
         Hydras(args={
+            'run_name': 'ai-domain',
             'network': BibliographicDataset(args={
                 'path': Path("data", "bibliometric_dataset"),
-                'conferences': set(["NIPS/NeurIPS"]),
+                'conferences': set(["NIPS/NeurIPS", "ICML", "KDD", "WWW", "HT", "WSDM", "SIGIR", "COLT", "ICDM", "CIKM", "AISTATS", "SDM", "ECML/PKDD", "ECIR", "PAKDD", "RecSys", "IJCNN", "ICANN", "ILP", "ICLR", "ACML", "ESANN", "MLJ", "JMLR", "IEEE Trans. Neural Networks", "DMKD"]),
                 'do_graph_vectors': False,
                 'do_semantic_vectors': False,
                 'separation_year': 2016, 
                 'verbose': 1
             }).get_network(), 
             'metrics': {
+                'prev_co_authors': HYDRASMETRICS.OVERLAP,  # social
                 'country_geocodes': HYDRASMETRICS.GEO_DISTANCE,  # geographic 
                 'affi_geocodes': HYDRASMETRICS.GEO_DISTANCE,  # geographic
-                'prev_co_authors': HYDRASMETRICS.OVERLAP,  # social
                 # 'graph_vectors': HYDRASMETRICS.COSINE_SIMILARITY,  # social
                 # 'semantic_vectors': HYDRASMETRICS.COSINE_SIMILARITY,  # social
                 'citations':HYDRASMETRICS.OVERLAP,  # cognitive
@@ -152,10 +171,12 @@ if __name__ == '__main__':
                 'countries': HYDRASMETRICS.OVERLAP,  # organisational
                 'schol_hindex': HYDRASMETRICS.DISTANCE,  # institutional
             }, 
-            'save_matrices': True,
+            'calculate_matrices': True,
             'save_matrices_path': Path("data", "matrices"),
-            'save_evidences': True,
+            'calculate_evidences': True,
             'save_evidences_path': Path("data", "evidence"),
+            'build_plot': False,
             'top_k_percentage': 0.01,
-            'ks': [1, 3, 5, 10, 50, 100, 1000, 10000]
+            'ks': [1, 3, 5, 10, 50, 100, 1000, 10000], 
+            'verbose': 1
         })

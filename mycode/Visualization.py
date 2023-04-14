@@ -2,7 +2,7 @@ import numpy as np
 
 def plot_hyptrails(evidences: dict, k_values: list, save_path: str) -> None:
     import matplotlib.pyplot as plt
-    # plt.style.use('seaborn')
+    plt.style.use('seaborn')
     tex_fonts = {
         # Use LaTeX to write all text
         "text.usetex": True,
@@ -18,13 +18,13 @@ def plot_hyptrails(evidences: dict, k_values: list, save_path: str) -> None:
     width = 345
     plt.rcParams.update(tex_fonts)
     fig_size = set_size(width) 
-    plt.figure(figsize=fig_size)
+    plt.figure()
     for name, evidence in evidences.items():
         plt.plot(np.arange(len(evidence)), evidence, label=f"{name}")
     plt.xticks(np.arange(len(evidence)), k_values)
     plt.xlabel("k-factor")
     plt.ylabel("Evidence")
-    plt.legend()
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.05), ncol=4, fancybox=True, shadow=True)
     plt.grid(True)
     plt.tight_layout()
     plt.savefig(save_path, bbox_inches="tight")
