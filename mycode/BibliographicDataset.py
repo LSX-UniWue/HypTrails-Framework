@@ -12,7 +12,7 @@ class BibliographicDataset:
         self.separation_year = args['separation_year']
         self.do_graph_vectors = args['do_graph_vectors']
         self.do_semantic_vectors = args['do_semantic_vectors']
-        if 'conferences' not in args:
+        if 'conferences' not in args or args['conferences'] is None:
             with open(Path(self.path, "ai_venues.json"), 'r') as f:
                 tmp = json.load(f)
                 self.conferences = set([a for b in tmp.values() for a in b])

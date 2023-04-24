@@ -1,4 +1,5 @@
 .vscode
 .venv
+data/matrices
 data/bibliometric_dataset
 *__pycache__
