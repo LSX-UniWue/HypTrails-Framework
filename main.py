@@ -140,10 +140,10 @@ if __name__ == '__main__':
     else:
         ai_confs = set(["NIPS/NeurIPS", "ICML", "KDD", "WWW", "HT", "WSDM", "SIGIR", "COLT", "ICDM", "CIKM", "AISTATS", "SDM", "ECML/PKDD", "ECIR", "PAKDD", "RecSys", "IJCNN", "ICANN", "ILP", "ICLR", "ACML", "ESANN", "MLJ", "JMLR", "IEEE Trans. Neural Networks", "DMKD"])
         Hydras(args={
-            'run_name': 'nips-vectors',
+            'run_name': 'all-with-vectors',
             'network': BibliographicDataset(args={
                 'path': Path("data", "bibliometric_dataset"),
-                'conferences': ["NIPS/NeurIPS"],  # None would mean all
+                'conferences': None,  # None would mean all
                 'do_graph_vectors': True,
                 'do_semantic_vectors': True,
                 'separation_year': 2016, 

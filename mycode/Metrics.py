@@ -32,7 +32,7 @@ class HYDRASMETRIC:
          elif self.metric == HYDRASMETRICDISTANCE.GEO_DISTANCE:
              return min(great_circle(x, y).km for x in a for y in b) if b is not None and len(b) != 0 else 0
          elif self.metric == HYDRASMETRICDISTANCE.COSINE_SIMILARITY:
-             return 1 - distance.cosine(a, b)
+             return 1 - distance.cosine(a, b) if b is not None else 0
          elif self.metric == HYDRASMETRICDISTANCE.DISTANCE:
              return abs(a - b) if b is not None else 0
          else:

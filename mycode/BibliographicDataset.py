@@ -85,13 +85,15 @@ class BibliographicDataset:
         return graph
     
     def add_embedding(self, path_to_embeddings: Path, name: str) -> None:
+        for curr in self.node_attributes.values():
+            curr[f"{name}_vectors"] = None
         with open(path_to_embeddings, 'r') as f:
-            for line in tqdm(f, desc="Load graph embeddings ..."):
+            for line in tqdm(f, desc=f"Load {name} embeddings ..."):
                 line = json.loads(line)
                 if line['author'] not in self.authors:
                     continue
                 author_id = self.authors[line['author']]['id']
-                self.node_attributes[author_id][f"{name}_vectors"] = np.array(line['embedding'])
+                self.node_attributes[author_id][f"{name}_vectors"] = np.array(line['embedding']).reshape(-1)
 
     def get_network(self) -> nx.DiGraph:
         return self.graph
