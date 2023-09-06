@@ -7,10 +7,10 @@ from functools import partial
 from scipy.sparse import csr_matrix, vstack
 from pytrails.hyptrails import MarkovChain
 
-from mycode.Metrics import *
-from mycode.SyntheticDatasets import *
-from mycode.BibliographicDataset import *
-from mycode.Visualization import plot_hyptrails
+from Code.Metrics import *
+from Code.SyntheticDatasets import *
+from Code.BibliographicDataset import *
+from Code.Visualization import plot_hyptrails
 
 def calculate_row_similarity(row, attributes: dict, metric: HYDRASMETRIC, top_k: int) -> csr_matrix:
     current = attributes[row]

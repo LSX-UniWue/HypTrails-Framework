@@ -2,4 +2,6 @@
 .venv
 data/matrices
 data/bibliometric_dataset
+kubernetes
+run_cluster.sh
 *__pycache__
