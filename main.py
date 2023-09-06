@@ -130,7 +130,7 @@ if __name__ == '__main__':
             ],
             'calculate_matrices': False,
             'save_matrices_path': Path("data", "matrices"),
-            'calculate_evidences': True,
+            'calculate_evidences': False,
             'save_evidences_path': Path("data", "evidence"),
             'build_plot': True,
             'top_k_percentage': 0.01,
@@ -163,11 +163,11 @@ if __name__ == '__main__':
                 HYDRASMETRIC(name="countries", metric=HYDRASMETRICDISTANCE.OVERLAP),  # organisational
                 HYDRASMETRIC(name="schol_hindex", metric=HYDRASMETRICDISTANCE.DISTANCE),  # institutional
             ], 
-            'calculate_matrices': True,
+            'calculate_matrices': False,
             'save_matrices_path': Path("data", "matrices"),
-            'calculate_evidences': True,
+            'calculate_evidences': False,
             'save_evidences_path': Path("data", "evidence"),
-            'build_plot': False,
+            'build_plot': True,
             'top_k_percentage': 0.01,
             'ks': [1, 3, 5, 10, 50, 100, 1000, 10000], 
             'verbose': 1

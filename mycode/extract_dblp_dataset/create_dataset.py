@@ -542,7 +542,7 @@ def extract_semantic_scholar_citations() -> None:
 
 
 
-def pipeline_prepare_db() -> None:
+def create_dataset() -> None:
     """
     '*** Starting pipeline process to prepare airankings Database ***'
     :param db_type: Which type of DB
@@ -572,13 +572,13 @@ def pipeline_prepare_db() -> None:
     # extract_semantic_scholar_citations()
 
     print('\nProcess 08 - Match with Semantic Scholar Abstracts')
-    match_semantic_scholar_abstracts()
+    # match_semantic_scholar_abstracts()
 
     print('\nProcess 09 - Match persons to semantic scholar. ')
     # match_semantic_scholar_persons()
 
     print('\nProcess 10 - Extract semantic scholar embeddings. ')
-    # match_semantic_scholar_embeddings()
+    match_semantic_scholar_embeddings()
 
     print('\nProcess 11 - Create graph embeddings')
     # create_graph_embeddings()
@@ -594,4 +594,4 @@ def pipeline_prepare_db() -> None:
 
 
 if __name__ == '__main__':
-    pipeline_prepare_db()
+    create_dataset()

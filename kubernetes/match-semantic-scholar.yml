@@ -1,23 +1,21 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: match-semantic-scholar
+  name: hydras-match-semantic-scholar
 spec:
   backoffLimit: 0
   template:
     spec:
+      priorityClassName: "research-med"
       containers:
-        - name: match-semantic-scholar
+        - name: hydras-match-semantic-scholar
           image: ls6-staff-registry.informatik.uni-wuerzburg.de/koopmann/hydras:latest
           resources:
-            limits:
+            limits: &resources
               cpu: 1
-              nvidia.com/gpu: "1"
+#               nvidia.com/gpu: "1"
               memory: "50Gi"
-            requests:
-              cpu: 1
-              nvidia.com/gpu: "1"
-              memory: "50Gi"
+            requests: *resources
           imagePullPolicy: "Always"
           volumeMounts:
             - mountPath: "/workdir/"
